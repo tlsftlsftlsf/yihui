@@ -6,10 +6,26 @@ import subprocess
 import os
 import sys
 import datetime
+import psutil
 from win32com.client import Dispatch
 
 # 全局时间备份
 original_hour = None
+
+
+def kill_process(process_name):
+    """强制结束指定进程"""
+    try:
+        killed = False
+        for proc in psutil.process_iter(['name']):
+            if proc.info['name'] == process_name:
+                proc.kill()
+                print(f"[进程终止] 已结束进程: {process_name}")
+                killed = True
+        return killed
+    except Exception as e:
+        print(f"[异常] 结束进程出错: {e}")
+        return False
 
 
 def backup_system_hour():
@@ -131,10 +147,17 @@ if __name__ == "__main__":
         "modified_hour": 22,  # 要设置的小时数
         "timeout": 15,  # 窗口等待超时(秒)
         "click_position": (1516, 38),  # 要点击的坐标
-        "click_delay": 10  # 点击延迟(秒)
+        "click_delay": 10,  # 点击延迟(秒)
+        "process_to_kill": "YihuiRobotUI.exe"  # 需要关闭的进程名
     }
 
     try:
+        # === 0. 关闭已有进程 ===
+        print("=" * 40)
+        print(f"正在检查并关闭 {CONFIG['process_to_kill']} 进程...")
+        kill_process(CONFIG['process_to_kill'])
+        time.sleep(1)  # 等待进程完全关闭
+
         # === 1. 启动应用 ===
         print("=" * 40)
         print("正在启动应用程序...")
